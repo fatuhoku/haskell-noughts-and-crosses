@@ -1,4 +1,4 @@
-module NAA.Logic (GameState(..),createBoard3x3,judge,apply) where
+module NAA.Logic (GameState(..),createBoard3x3,judge,apply,isValidIn) where
 
 -- import Prelude hiding (map)
 import qualified Data.Vector as V
@@ -15,12 +15,18 @@ data GameState = GameState {
   theBoard :: Board,           -- the game board.
   turn     :: Turn,            -- whose turn is it?
   wins     :: Int,             -- the number of player wins
-  losses   :: Int              -- the number of player losses
+  losses   :: Int,             -- the number of player losses
+  -- Immutables (the idea is that they aren't set, anyway)
+  human    :: Player,
+  computer :: Player
 }
 
 instance Show GameState where
   show (GameState {theBoard=board,turn=theTurn}) =
-    "It's " ++ show theTurn ++ "'s turn.\n\n" ++ show board ++ "\n"
+    turnIndicator ++ "\n\n" ++ show board ++ "\n"
+    where
+      turnIndicator = ""
+      -- turnIndicator = "It's " ++ show theTurn ++ "'s turn."
 
 -- Passes judgement over a game board.
 -- With a 2D array this is easy:
@@ -86,6 +92,14 @@ apply :: Board -> Move -> Board
 apply (Board brd) (Move m) = Board $ brd // [(coord,Piece player)]
   where
     (player,coord) = m
+
+isValidIn :: (Int,Int) -> GameState -> Bool
+isValidIn c@(i,j) (GameState {theBoard=Board brd}) =
+  minM <= i && i <= maxM &&
+  minN <= j && j <= maxN &&
+  brd ! c == Empty
+  where
+    ((minM,minN),(maxM,maxN)) = bounds brd
 
 judgeRow  i = judgeRCD (RowWin i)
 judgeCol  j = judgeRCD (ColWin j)
