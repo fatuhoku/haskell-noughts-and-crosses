@@ -7,18 +7,23 @@ import NAA.AI
 import NAA.Loop
 import NAA.Logic
 import NAA.Data hiding (player)
+import NAA.Interface (initialise)
 import NAA.Interface.CLI
 import Control.Monad.Trans
 import Control.Monad.State.Lazy
 
-player = R
-comp   = O
-
 -- *Very* dubious initialisation function
 main :: IO ()
 main = do
-  initialise player comp
-  _ <- execStateT runNoughtsAndArrs $ defaultGameState
+
+  let player = human defaultGameState
+  let comp   = computer defaultGameState
+
+  -- Set the user interface here
+  let iface = cliInterface
+  let gs = defaultGameState
+
+  _ <- execStateT (liftIO (initialise iface gs) >> runNoughtsAndArrs iface) gs
   return ()
   where
     default3x3Board = createBoard3x3 $ replicate 9 Empty

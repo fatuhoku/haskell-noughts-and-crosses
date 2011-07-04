@@ -3,6 +3,7 @@ module NAA.Loop (runNoughtsAndArrs) where
 import NAA.AI
 import NAA.Logic
 import NAA.Data hiding (player)
+import NAA.Interface
 import NAA.Interface.CLI
 import Control.Monad.Trans
 import Control.Monad.State.Lazy
@@ -22,16 +23,16 @@ type NoughtsAndArrs a = StateT GameState IO a
 --  a) a curses interface
 --  b) a GL interface
 --
-runNoughtsAndArrs :: NoughtsAndArrs ()
-runNoughtsAndArrs = do
+runNoughtsAndArrs :: UserInterface -> NoughtsAndArrs ()
+runNoughtsAndArrs ui = do
 
   -- Read state and show the game status
   gs@GameState{human=thePlayer,computer=theComputer} <- get
   gs' <- withGameState gs $ \gs -> do
-    print gs
+    onDisplayGameState ui gs
     let player = turn gs
     let performTurn = if thePlayer == player
-                      then onPlayersTurn thePlayer
+                      then onPlayersTurn ui thePlayer
                       else onComputersTurn theComputer
     move <- performTurn gs    -- obtain a move from the AI or player
     -- Put the new nought or cross into the state
@@ -42,14 +43,14 @@ runNoughtsAndArrs = do
 
   case judge (theBoard gs') of
     Just result -> liftIO $ do
-      print gs'
+      onDisplayGameState ui gs'
       case result of
-        Draw      -> onGameDraw
+        Draw      -> onGameDraw ui
         Win p     -> if p == thePlayer
-                     then onGameWin thePlayer
-                     else onGameLose thePlayer
+                     then onGameWin ui thePlayer
+                     else onGameLose ui thePlayer
         Invalid i -> error . show $ Invalid i
-    Nothing -> runNoughtsAndArrs             -- neither won or lost. Continue.
+    Nothing -> runNoughtsAndArrs ui           -- neither won or lost. Continue.
   where
     withGameState gs mf = liftIO (mf gs)
     onComputersTurn = unbeatableAI           -- plug in an AI

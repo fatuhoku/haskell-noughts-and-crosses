@@ -1,9 +1,6 @@
-module NAA.Interface.CLI (initialise,
-                          onPlayersTurn,
-                          onGameDraw,
-                          onGameWin,
-                          onGameLose) where
+module NAA.Interface.CLI (cliInterface) where
 
+import NAA.Interface
 import NAA.Data
 import NAA.Logic
 import System.IO
@@ -13,8 +10,17 @@ import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Token
 import Data.Array.Diff
 
-initialise :: Player -> Player -> IO ()
-initialise plyr comp = do
+cliInterface = UserInterface {
+  initialise = initialiseCLI,
+  onDisplayGameState = print,
+  onPlayersTurn = onPlayersTurnCLI,
+  onGameDraw = onGameDrawCLI,
+  onGameWin  = onGameWinCLI,
+  onGameLose = onGameLoseCLI
+}
+
+initialiseCLI :: GameState -> IO ()
+initialiseCLI (GameState {human=plyr,computer=comp}) = do
   putStr "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
   putStr "!            Hok's Noughts and Arrs               !\n"
   putStr "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
@@ -24,29 +30,29 @@ initialise plyr comp = do
   putStr "So, we start the game!\n\n"
 
 -- Produces a valid move from some valid game state.
-onPlayersTurn :: Player -> GameState -> IO Move
-onPlayersTurn plyr gs = do
+onPlayersTurnCLI :: Player -> GameState -> IO Move
+onPlayersTurnCLI plyr gs = do
   putStr $ "(" ++ show plyr ++ "'s turn) Where will you go next?\n"
   coord <- msum (repeat $ getUserCoordCLI gs)
   putStr "\n\n"
   return $ Move ((turn gs),coord)
 
-onGameDraw :: IO ()
-onGameDraw = putStr drewMsg
+onGameDrawCLI :: IO ()
+onGameDrawCLI = putStr drewMsg
   where
     drewMsg = "...................................................\n \
               \---------------------- DRAW -----------------------\n"
 
-onGameWin :: Player -> IO ()
-onGameWin _ = putStr congratulateMsg
+onGameWinCLI :: Player -> IO ()
+onGameWinCLI _ = putStr congratulateMsg
   where
     congratulateMsg = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\
                       \Congratulations, you've won against the mighty computer!!\n\
                       \You're so smart!\n\
                       \!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 
-onGameLose :: Player -> IO ()
-onGameLose _ = putStr insultMsg
+onGameLoseCLI :: Player -> IO ()
+onGameLoseCLI _ = putStr insultMsg
   where
     insultMsg = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \
                 \POOR YOU! You've LOST! Oh deary deary me.             \
@@ -65,6 +71,8 @@ getUserCoordCLI gs = do
                then return c
                else validationErrorMsg c >> mzero
   where
+    showPrompt prompt = putStr prompt >> hFlush stdout -- stdout buffers until \n.
+
     coordinate :: Parser (Int,Int)
     coordinate = do { spaces;
                       char '('; i <- int; char ','; j <- int; char ')';
@@ -76,14 +84,12 @@ getUserCoordCLI gs = do
       n <- many (oneOf "0123456789")
       return $ read n
 
+    parseErrorMsg = do
+      putStr "\nA coordinate must be in the form (x,y). Try again.\n"
 
-parseErrorMsg = do
-  putStr "\nA coordinate must be in the form (x,y). Try again.\n"
+    validationErrorMsg c = do
+      putStr $ show c ++ " is not valid (either occupied or out of bounds). Try again.\n"
 
-validationErrorMsg c = do
-  putStr $ show c ++ " is not valid (either occupied or out of bounds). Try again.\n"
-
-showPrompt prompt = putStr prompt >> hFlush stdout -- stdout buffers until \n.
 
 -- Indent the string by some number of spaces, respecting where newlines are.
 indent :: Int -> String -> String

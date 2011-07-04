@@ -7,26 +7,7 @@ import Data.Maybe
 import Debug.Trace
 
 import NAA.Data
-
-type GameResult = BoardJudgement
-
--- R always starts.
-data GameState = GameState {
-  theBoard :: Board,           -- the game board.
-  turn     :: Turn,            -- whose turn is it?
-  wins     :: Int,             -- the number of player wins
-  losses   :: Int,             -- the number of player losses
-  -- Immutables (the idea is that they aren't set, anyway)
-  human    :: Player,
-  computer :: Player
-}
-
-instance Show GameState where
-  show (GameState {theBoard=board,turn=theTurn}) =
-    turnIndicator ++ "\n\n" ++ show board ++ "\n"
-    where
-      turnIndicator = ""
-      -- turnIndicator = "It's " ++ show theTurn ++ "'s turn."
+import NAA.State
 
 -- Passes judgement over a game board.
 -- With a 2D array this is easy:
