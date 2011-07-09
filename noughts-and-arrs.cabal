@@ -46,7 +46,7 @@ Build-type:          Simple
 Cabal-version:       >=1.2
 
 
-Executable noughts-and-arrs
+Executable noughts-and-arrs-cli
   -- .hs or .lhs file containing the Main module.
   Main-is:             Main.hs
   Hs-Source-Dirs:      src
@@ -54,6 +54,17 @@ Executable noughts-and-arrs
   Build-depends:       base, vector>=0.7.0.1,
                        diffarray>=0.1,split>=0.1.4,parsec>=3.1.1,
                        mtl>=2.0.1.0,list-extras>=0.4.0.1
+
+Executable noughts-and-arrs-gl
+  -- .hs or .lhs file containing the Main module.
+  Main-is:             GLMain.hs
+  Hs-Source-Dirs:      src
+  -- Packages needed in order to build this package.
+  Build-depends:       base, vector>=0.7.0.1,
+                       diffarray>=0.1,split>=0.1.4,parsec>=3.1.1,
+                       mtl>=2.0.1.0,list-extras>=0.4.0.1,
+                       OpenGL>=2.2.3.0,GLUT>=2.1.2.1,Stream>=0.4.1,
+                       utility-ht>=0.0.7
   
   -- Modules not exported by this package.
   -- Other-modules:       

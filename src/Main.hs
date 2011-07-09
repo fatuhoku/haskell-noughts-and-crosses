@@ -13,21 +13,13 @@ import NAA.Interface.CLI
 import Control.Monad.Trans
 import Control.Monad.State.Lazy
 
--- *Very* dubious initialisation function
 main :: IO ()
 main = do
-
-  let player = human defaultGameState
-  let comp   = computer defaultGameState
-
-  -- Set the user interface here
-  let iface = cliInterface
-  let gs = defaultGameState
-
   _ <- execStateT (liftIO (initialise iface gs) >> runNoughtsAndArrs iface) gs
   return ()
   where
-    defaultGameState = GameState {
+    iface = cliInterface              -- Use the Command Line Interface
+    gs = GameState {                  -- A default initial game state.
       boardState = blankBoardState R,
       wins = 0,
       losses = 0,
