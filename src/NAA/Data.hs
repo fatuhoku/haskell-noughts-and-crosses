@@ -7,6 +7,7 @@ module NAA.Data (Board(..),
                  DiagDir(..),
                  Move(..),
                  Turn,Idx2D,
+                 boardFromList,
                  Row,Col,Diag,RowColDiag,player,other) where
 
 -- import qualified Data.Vector as V
@@ -48,7 +49,7 @@ data RCDJudgement   = RowWin Int Player
 data BoardJudgement = Draw | Win Player | Invalid [RCDJudgement]
 
 newtype Board  = Board (DiffArray Idx2D Cell)
-newtype Move = Move (Player,Idx2D)
+type Move = (Player,Idx2D)
 
 instance Show Cell where
   show (Piece p) = show p
@@ -78,6 +79,9 @@ instance Show Board where
       showRow       = intersperse '|' . concatMap show
       hline n       = intersperse '+' $ replicate n '-'
       (_,(m,n))     = bounds brd
+
+boardFromList :: Int -> [Cell] -> Board
+boardFromList n = Board . listArray ((0,0),(n-1,n-1))
 
 player :: RCDJudgement -> Player
 player (RowWin _ p)  = p

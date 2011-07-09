@@ -2,6 +2,7 @@ module NAA.Loop (runNoughtsAndArrs) where
 
 import NAA.AI
 import NAA.Logic
+import NAA.State
 import NAA.Data hiding (player)
 import NAA.Interface
 import NAA.Interface.CLI
@@ -29,21 +30,22 @@ runNoughtsAndArrs ui = do
   -- Read state and show the game status
   gs@GameState{human=thePlayer,computer=theComputer} <- get
   gs' <- withGameState gs $ \gs -> do
-    onDisplayGameState ui gs
-    let player = turn gs
+    onDisplayBoardState ui (boardState gs)
+    let bs = boardState gs
+    let player = turn bs
     let performTurn = if thePlayer == player
                       then onPlayersTurn ui thePlayer
-                      else onComputersTurn theComputer
+                      else unbeatableAI
     move <- performTurn gs    -- obtain a move from the AI or player
     -- Put the new nought or cross into the state
-    let newBoard = theBoard gs `apply` move
-    let gs' = gs {theBoard=newBoard,turn=other player}
+    let bs' = bs `apply` move
+    let gs' = gs {boardState=bs'}
     return gs'
   put gs'
 
-  case judge (theBoard gs') of
+  case judge (board $ boardState gs') of
     Just result -> liftIO $ do
-      onDisplayGameState ui gs'
+      onDisplayBoardState ui (boardState gs')
       case result of
         Draw      -> onGameDraw ui
         Win p     -> if p == thePlayer
@@ -53,4 +55,3 @@ runNoughtsAndArrs ui = do
     Nothing -> runNoughtsAndArrs ui           -- neither won or lost. Continue.
   where
     withGameState gs mf = liftIO (mf gs)
-    onComputersTurn = unbeatableAI           -- plug in an AI

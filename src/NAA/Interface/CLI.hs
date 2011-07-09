@@ -2,6 +2,7 @@ module NAA.Interface.CLI (cliInterface) where
 
 import NAA.Interface
 import NAA.Data
+import NAA.State
 import NAA.Logic
 import System.IO
 import Control.Monad.Trans
@@ -13,6 +14,7 @@ import Data.Array.Diff
 cliInterface = UserInterface {
   initialise = initialiseCLI,
   onDisplayGameState = print,
+  onDisplayBoardState = print,
   onPlayersTurn = onPlayersTurnCLI,
   onGameDraw = onGameDrawCLI,
   onGameWin  = onGameWinCLI,
@@ -31,11 +33,11 @@ initialiseCLI (GameState {human=plyr,computer=comp}) = do
 
 -- Produces a valid move from some valid game state.
 onPlayersTurnCLI :: Player -> GameState -> IO Move
-onPlayersTurnCLI plyr gs = do
+onPlayersTurnCLI plyr (GameState {boardState=bs}) = do
   putStr $ "(" ++ show plyr ++ "'s turn) Where will you go next?\n"
-  coord <- msum (repeat $ getUserCoordCLI gs)
+  coord <- msum (repeat $ getUserCoordCLI bs)
   putStr "\n\n"
-  return $ Move ((turn gs),coord)
+  return $ ((turn bs),coord)
 
 onGameDrawCLI :: IO ()
 onGameDrawCLI = putStr drewMsg
@@ -61,13 +63,13 @@ onGameLoseCLI _ = putStr insultMsg
 
 
 -- Does the hard work of extracting a game state from the user.
-getUserCoordCLI :: GameState -> IO (Int,Int)
-getUserCoordCLI gs = do
+getUserCoordCLI :: BoardState -> IO (Int,Int)
+getUserCoordCLI bs@(BoardState {turn=thePlayer}) = do
   showPrompt "> "
   inLine <- getLine      -- retrieve the line -- other 
   case parse coordinate "Failed to parse coordinate" inLine of
     Left _  -> parseErrorMsg >> mzero
-    Right c -> if c `isValidIn` gs
+    Right c -> if (thePlayer,c) `isValidIn` bs
                then return c
                else validationErrorMsg c >> mzero
   where

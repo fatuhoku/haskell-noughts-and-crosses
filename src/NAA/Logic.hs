@@ -1,4 +1,4 @@
-module NAA.Logic (GameState(..),createBoard3x3,judge,apply,isValidIn) where
+module NAA.Logic (GameState(..),judge,apply,isValidIn) where
 
 -- import Prelude hiding (map)
 import qualified Data.Vector as V
@@ -53,12 +53,17 @@ judge b@(Board brd) =
     diagJs = [judgeDiag Major $ getCells $ diagIdxsMajor,
               judgeDiag Minor $ getCells $ diagIdxsMinor]
   
-    getCells  = map (brd!) -- transforms indicices for a row, column or diagonal
-    rowIdxs i = [(i,j) | j <- [minN..maxN]] -- RowWin i Player :: [[Idx2D]]
-    colIdxs j = [(i,j) | i <- [minM..maxM]] -- ColWin j Player :: [[Idx2D]]
-    diagIdxsMajor = [(i,i) | i <- [minM..maxM]] -- SE direction
-    diagIdxsMinor = [(i,j) | i <- [minM..maxM], j <- [maxN,maxN-1..minN]] -- NE direction
+    getCells :: [Idx2D] -> [Cell]
+    getCells  = map (brd!)
+    rowIdxs i = [(i,j) | j <- [minN..maxN]]
+    colIdxs j = [(i,j) | i <- [minM..maxM]]
+    diagIdxsMajor = [(i,i) | i <- [minM..maxM]]
+    diagIdxsMinor = [(i,maxM-i) | i <- [minM..maxM]]
     ((minM,minN),(maxM,maxN)) = bounds brd
+
+judgeRow  i = judgeRCD (RowWin i)
+judgeCol  j = judgeRCD (ColWin j)
+judgeDiag d = judgeRCD (DiagWin d)
 
 judgeRCD :: (Player -> RCDJudgement) -> RowColDiag -> Maybe RCDJudgement
 judgeRCD _ [] = error "judgeRCD: Empty row, column or diagonal." 
@@ -68,25 +73,22 @@ judgeRCD f (c:cs) = case c of
 
 -- Applies a move onto the board. This formalises the setting of a cell on the
 -- board. Use as infix operation.
--- DOES NOT DO SANITY CHECKS! Quite unsafe indeed.
-apply :: Board -> Move -> Board
-apply (Board brd) (Move m) = Board $ brd // [(coord,Piece player)]
-  where
-    (player,coord) = m
+apply :: BoardState -> Move -> BoardState
+apply bs@(BoardState {board=(Board brd),turn=p'}) (p,coord)
+  | p == p'   = bs {board=Board $ brd // [(coord,Piece p)],turn=other p}
+  | otherwise = error $ "apply: player " ++ show 
+                p ++ " tried to move when it's actually "
+                ++ show p' ++"'s turn!"
 
-isValidIn :: (Int,Int) -> GameState -> Bool
-isValidIn c@(i,j) (GameState {theBoard=Board brd}) =
+-- isValidIn takes a move and returns whether it is a valid move in the board
+-- state.
+-- A valid move is when the turns agree
+isValidIn :: Move -> BoardState -> Bool
+isValidIn (player,(i,j)) (BoardState {board=Board brd,turn=theTurn}) =
+  let ((minM,minN),(maxM,maxN)) = bounds brd in
+  player == theTurn &&
   minM <= i && i <= maxM &&
   minN <= j && j <= maxN &&
-  brd ! c == Empty
-  where
-    ((minM,minN),(maxM,maxN)) = bounds brd
-
-judgeRow  i = judgeRCD (RowWin i)
-judgeCol  j = judgeRCD (ColWin j)
-judgeDiag d = judgeRCD (DiagWin d)
+  brd ! (i,j) == Empty
 
 ftrace = flip trace
-
-createBoard3x3 :: [Cell] -> Board
-createBoard3x3 = Board . listArray ((0,0),(2,2))

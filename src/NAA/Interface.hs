@@ -8,6 +8,7 @@ import NAA.State
 data UserInterface = UserInterface {
   initialise    :: GameState -> IO (),
   onDisplayGameState :: GameState -> IO (),
+  onDisplayBoardState :: BoardState -> IO (),
   onPlayersTurn :: Player -> GameState -> IO Move,
   onGameDraw    :: IO (),
   onGameWin     :: Player -> IO (),

@@ -4,6 +4,7 @@
 module Main where
 
 import NAA.AI
+import NAA.State
 import NAA.Loop
 import NAA.Logic
 import NAA.Data hiding (player)
@@ -26,10 +27,8 @@ main = do
   _ <- execStateT (liftIO (initialise iface gs) >> runNoughtsAndArrs iface) gs
   return ()
   where
-    default3x3Board = createBoard3x3 $ replicate 9 Empty
     defaultGameState = GameState {
-      theBoard = default3x3Board,
-      turn = R,
+      boardState = blankBoardState R,
       wins = 0,
       losses = 0,
       human = R,
