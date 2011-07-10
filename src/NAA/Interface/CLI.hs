@@ -12,13 +12,12 @@ import Text.ParserCombinators.Parsec.Token
 import Data.Array.Diff
 
 cliInterface = UserInterface {
-  initialise = initialiseCLI,
-  onDisplayGameState = print,
+  onInitialise  = initialiseCLI,
+  onDisplayGameState  = print,
   onDisplayBoardState = print,
   onPlayersTurn = onPlayersTurnCLI,
-  onGameDraw = onGameDrawCLI,
-  onGameWin  = onGameWinCLI,
-  onGameLose = onGameLoseCLI
+  onGameEnd     = onGameEndCLI,
+  onTerminate   = return ()
 }
 
 initialiseCLI :: GameState -> IO ()
@@ -39,28 +38,27 @@ onPlayersTurnCLI plyr (GameState {boardState=bs}) = do
   putStr "\n\n"
   return $ ((turn bs),coord)
 
-onGameDrawCLI :: IO ()
-onGameDrawCLI = putStr drewMsg
+onGameEndCLI :: GameState -> BoardJudgement -> IO ()
+onGameEndCLI (GameState {human=p}) result = 
+  case result of
+    Draw      -> putStr drewMsg
+    Win p'    -> if p == p'
+                 then putStr congratulateMsg
+                 else putStr insultMsg
+    Invalid i -> error . show $ Invalid i
   where
     drewMsg = "...................................................\n \
               \---------------------- DRAW -----------------------\n"
 
-onGameWinCLI :: Player -> IO ()
-onGameWinCLI _ = putStr congratulateMsg
-  where
     congratulateMsg = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\
                       \Congratulations, you've won against the mighty computer!!\n\
                       \You're so smart!\n\
                       \!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 
-onGameLoseCLI :: Player -> IO ()
-onGameLoseCLI _ = putStr insultMsg
-  where
     insultMsg = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \
                 \POOR YOU! You've LOST! Oh deary deary me.             \
                 \On such a simple game as well!\n\
                 \!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-
 
 -- Does the hard work of extracting a game state from the user.
 getUserCoordCLI :: BoardState -> IO (Int,Int)

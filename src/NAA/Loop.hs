@@ -46,12 +46,7 @@ runNoughtsAndArrs ui = do
   case judge (board $ boardState gs') of
     Just result -> liftIO $ do
       onDisplayBoardState ui (boardState gs')
-      case result of
-        Draw      -> onGameDraw ui
-        Win p     -> if p == thePlayer
-                     then onGameWin ui thePlayer
-                     else onGameLose ui thePlayer
-        Invalid i -> error . show $ Invalid i
+      onGameEnd ui gs' result                 -- when the game ends with result
     Nothing -> runNoughtsAndArrs ui           -- neither won or lost. Continue.
   where
     withGameState gs mf = liftIO (mf gs)

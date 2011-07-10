@@ -8,15 +8,16 @@ import NAA.State
 import NAA.Loop
 import NAA.Logic
 import NAA.Data hiding (player)
-import NAA.Interface (initialise)
+import NAA.Interface
 import NAA.Interface.CLI
 import Control.Monad.Trans
 import Control.Monad.State.Lazy
 
 main :: IO ()
 main = do
-  _ <- execStateT (liftIO (initialise iface gs) >> runNoughtsAndArrs iface) gs
-  return ()
+  onInitialise iface gs
+  execStateT (runNoughtsAndArrs iface) gs
+  onTerminate iface
   where
     iface = cliInterface              -- Use the Command Line Interface
     gs = GameState {                  -- A default initial game state.

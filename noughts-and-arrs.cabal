@@ -64,7 +64,7 @@ Executable noughts-and-arrs-gl
                        diffarray>=0.1,split>=0.1.4,parsec>=3.1.1,
                        mtl>=2.0.1.0,list-extras>=0.4.0.1,
                        OpenGL>=2.2.3.0,GLUT>=2.1.2.1,Stream>=0.4.1,
-                       utility-ht>=0.0.7
+                       utility-ht>=0.0.7,GLFW-b>=0.0.2.10
   
   -- Modules not exported by this package.
   -- Other-modules:       

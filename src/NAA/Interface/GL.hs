@@ -4,29 +4,72 @@ import Data.Tuple.HT
 import qualified Data.Stream as S
 import Data.Array.Diff
 import Graphics.Rendering.OpenGL hiding (R)
-import Graphics.UI.GLUT hiding (R)
+import Graphics.UI.GLFW
+import Control.Concurrent
 import NAA.Interface
 import NAA.Data
 import NAA.Logic
 import NAA.State
 
 glInterface = UserInterface {
-  initialise = const initialiseGL,
+  onInitialise = const initialiseGL,
   onDisplayGameState = drawGameState,
   onDisplayBoardState = drawBoardState,
-  onPlayersTurn = \p gs -> return (R,(0,0)),
-  onGameDraw = return (), -- TODO 
-  onGameWin  = const $ return (), -- TODO 
-  onGameLose = const $ return ()  -- TODO
+  onPlayersTurn = \p gs -> return (R,(0,0)), -- TODO: this is an invalid strategy...
+  onGameEnd   = \gs j   -> return (),        -- TODO
+  onTerminate = terminate               -- Terminates GLFW
 }
 
--- Initialises the GL window and system
+-- This is the code that handles onGameEnd.
+-- case result of
+--         Draw      -> onGameDraw ui
+--         Win p     -> if p == thePlayer
+--                      then onGameWin ui thePlayer
+--                      else onGameLose ui thePlayer
+--         Invalid i -> error . show $ Invalid i
+
+-- Initialise using GLFW for creating our Window.
+-- We set the window size to 800 by 600.
+-- Refreshing GLFW requires a mainloop to stay responsive to the user: to events
+-- such as resizing of the Window. 
+-- This means that we must spark off a UI thread using forkIO to allow
+-- GLFW to poll for inputs. The game loop needs to wait on the availability of
+-- an MVar, which the UI thread will populate with the user's intended move.
 initialiseGL :: IO ()
 initialiseGL = do
-  (progName,_) <- getArgsAndInitialize
-  initialDisplayMode $= [DoubleBuffered,RGBMode]
-  initialWindowSize  $= winSize
-  createWindow "Noughts and R's"
+  initSuccess <- initialize 
+  if initSuccess then return () else fail "initialiseGL: failed initialising GLFW"
+  windSuccess <- openWindow $ defaultDisplayOptions
+                                { displayOptions_width  = 600
+                                , displayOptions_height = 600
+                                }
+  if windSuccess then return () else fail "initialiseGL: could not open window"
+  setWindowTitle "Noughts and R's"
+  setWindowPosition 200 200
+  setWindowSizeCallback onResize
+  setWindowCloseCallback onWindowClose
+  setKeyCallback onKeyPressed
+  setMouseButtonCallback onMouseButton
+  setMousePositionCallback onMousePosition
+  setMouseWheelCallback onMouseWheel
+
+  -- At this point, we have a window! We can spark a thread off to do its
+  -- drawing!
+
+  forkIO uiThread    -- TODO I might want this ThreadId at some point
+  return ()
+  where
+    onResize w h       = return ()
+    onKeyPressed key b = return ()
+    onMousePosition x y   = return ()
+    onMouseButton msbtn b = return ()
+    onMouseWheel n     = return ()
+    onWindowClose      = return True
+
+uiThread :: IO ()
+uiThread = do
+  -- initialDisplayMode $= [DoubleBuffered,RGBMode]
+  -- initialWindowSize  $= winSize
   clear [ColorBuffer]
   viewport           $= ((Position 0 0),winSize)
   matrixMode         $= Projection
@@ -35,7 +78,7 @@ initialiseGL = do
   ortho2D (-1.6) (1.6) (0.0) (2.0)
   matrixMode         $= Modelview 0
   loadIdentity
-  reshapeCallback    $= Just reshape
+  swapBuffers
   where
     winSize = Size 800 600
 
@@ -44,9 +87,6 @@ initialiseGL = do
       | h /= 0    = fromIntegral w / fromIntegral h
       | otherwise = error "Zero height"
 
-    reshape s@(Size w h) = do
-      viewport $= (Position 0 0,s)
-      postRedisplay Nothing
 
 -- How do we render a board? We render each of the cells individually, in the
 -- right places, transforming OpenGL matrix as required.
