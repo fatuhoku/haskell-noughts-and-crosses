@@ -15,7 +15,7 @@ import Control.Monad.State.Lazy
 
 main :: IO ()
 main = do
-  onInitialise iface gs
+  onInitialise iface
   execStateT (runNoughtsAndArrs iface) gs
   onTerminate iface
   where

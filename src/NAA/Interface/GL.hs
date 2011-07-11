@@ -12,13 +12,15 @@ import NAA.Logic
 import NAA.State
 
 glInterface = UserInterface {
-  onInitialise = const initialiseGL,
-  onDisplayGameState = drawGameState,
-  onDisplayBoardState = drawBoardState,
-  onPlayersTurn = \p gs -> return (R,(0,0)), -- TODO: this is an invalid strategy...
-  onGameEnd   = \gs j   -> return (),        -- TODO
-  onTerminate = terminate               -- Terminates GLFW
+  onInitialise = initialiseGL,
+  onGameStart  = \gs -> return (),   -- TODO
+  onRetrieveMove = onRetrieveMoveGL, -- TODO: this is an invalid strategy...
+  onInvalidMove  = const $ return (),-- with validation we shouldn't get this.
+  onPlayerMove   = onPlayerMoveGL,   -- TODO
+  onGameEnd   = \gs j   -> return (),-- TODO
+  onTerminate = terminate            -- Terminates GLFW
 }
+
 
 -- This is the code that handles onGameEnd.
 -- case result of
@@ -78,7 +80,11 @@ uiThread = do
   ortho2D (-1.6) (1.6) (0.0) (2.0)
   matrixMode         $= Modelview 0
   loadIdentity
+
+  -- Draw!!!
+
   swapBuffers
+  uiThread     -- recurse and draw again!
   where
     winSize = Size 800 600
 
@@ -109,6 +115,12 @@ drawBoard (Board brd) = do
   maxN' = fromIntegral maxN :: GLdouble
   gridVerts = [Vertex3 x y 0 | x <- [0,(1/(maxN'+1))..1], y <- [0,1]]    -- Vertical lines
               ++ [Vertex3 x y 0 | x <- [0,1], y <- [0,(1/(maxM'+1))..1]] -- Horizontal lines
+
+onRetrieveMoveGL :: Player -> GameState -> IO Move
+onRetrieveMoveGL = undefined
+
+onPlayerMoveGL :: Move -> GameState -> IO ()
+onPlayerMoveGL = undefined
  
 zAxis = Vector3 0 0 (-1::GLfloat)
 -- Simply draw a grid given a Board. Assume the grid is to be drawn on a unit

@@ -3,43 +3,54 @@ module NAA.Interface (UserInterface(..)) where
 import NAA.Data
 import NAA.State
 
--- We don't want to be mixing and matching these events, but this kind of
--- structure allows it.
----- This happens when the game wishes to terminate and close the window.
+-- | Noughts and Arrs permit different user interfaces to be implemented for
+-- letting the user interact with the game logic with an event-driven approach.
 --
--- onInitialise
---   Called before the game actually starts.
+-- The user guide seems to suggest that there is a separate user thread hanging
+-- around when it comes to handling events. Plus, GLFW doesn't work well with
+-- other threads, so let's not make things more complicated than they need to
+-- be: we waitForEvents on GLFW only when events are required.
 --
--- onDisplayGameState :: GameState -> IO (),
---   Called whenever the GameState needs to be drawn completely, because
---   it has been updated somehow.
---   TODO how do we find deltas between two structures?
+-- Let's think of all the events that a GLFW window will require:
+--  - initialisation - initialise GLFW and create a window
+--  - prompt for user input (first time)   - to obtain a valid move from the user
+--  - prompt for user input (second times) - whenver the player makes a mistake
+--  - a move is made - we update the display with the new piece and updated game state
+--  - there is a draw, or somebody wins - this marks the end of a game, and a
+--                                        prompt to play once more.
 --
--- onDisplayBoardState :: BoardState -> IO (),
---   Called whenever the BoardState is updated within a game. This has certain
---   overlap with onDisplayGameState, because drawing the GameState typically
---   means drawing the BoardState too.
+-- onInitialise :: IO () 
+--   Called at the beginning of the application.
 --
--- onPlayersTurn :: Player -> GameState -> IO Move,
---   Called whenever it is a player's turn. The current GameState is also given.
+-- onGameStart :: GameState -> IO ()
+--   Called at the beginning of a new game, with the given initial game state.
 --
--- onGameDraw    :: IO (),
---   Called whenever the game can be declared as a draw.
+-- onRetrieveMove :: Player -> GameState -> IO Move,
+--   Called whenever it is a player's turn to move.
+--   The retrieve move is returned in the IO Monad.
+--   We call waitOnEvents here, and try and handle them.
 --
--- onGameWin     :: Player -> IO (),
---   Called whenever a player wins. The winning player is provided.
---   TOOD Provide winning judgements as well.
+-- onInvalidMove :: Move -> IO ()
+--   When the user supplied move is not valid, we call this.
+--   We need to record that 
 --
--- onGameLose    :: Player -> IO ()
---   Called whenever a player wins. The winning player is provided.
---   TOOD Provide winning judgements as well.
+-- onPlayerMove :: Move -> GameState -> IO (),
+--   Called whenever a player make a move in the game. The move made, and the
+--   new game state is given. Typically this displays the new move.
+--   
+-- onGameEnd :: IO (),
+--   Called whenever the game can be declared as a draw, or when a player
+--   wins.
 --
--- onTerminate   :: Player -> IO () 
+-- onTerminate :: IO (),
+--   Called when the application is closing.
+--
 data UserInterface = UserInterface {
-  onInitialise  :: GameState -> IO (),
-  onDisplayGameState :: GameState -> IO (),
-  onDisplayBoardState :: BoardState -> IO (),
-  onPlayersTurn :: Player -> GameState -> IO Move,
-  onGameEnd     :: GameState -> BoardJudgement -> IO (),
-  onTerminate   :: IO () 
+  onInitialise   :: IO (),
+  onGameStart    :: GameState -> IO (),
+  onRetrieveMove :: Player -> GameState -> IO Move,
+  onInvalidMove  :: Move -> IO (),
+  onPlayerMove   :: Move -> GameState -> IO (),
+  onGameEnd      :: GameState -> BoardJudgement -> IO (),
+  onTerminate    :: IO () 
 }
