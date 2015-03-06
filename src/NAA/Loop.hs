@@ -9,6 +9,8 @@ import NAA.Interface.CLI
 import Control.Monad.Trans
 import Control.Monad.State.Lazy
 
+-- So not only do we need to keep running the GameState over IO but we probably
+-- want some scene state information.
 type NoughtsAndArrs a = StateT GameState IO a
 
 -- We start a game, loop as necessary, and end a game.

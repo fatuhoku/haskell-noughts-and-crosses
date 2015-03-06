@@ -1,0 +1,63 @@
+Name:                tic-tac-toe
+Version:             0.1
+
+Synopsis:            Tic-tac-toe (noughts and crosses) implementation in Haskell
+Description:
+  A command line implementation of the classic tic-tac-toe game.
+  I wrote this a long time ago to assess Haskell's ease of extensibility.
+  The idea was to write a simple implementation for the command line first,
+  and then write another implementation that would be graphical, handling
+  input from the mouse, and later, the keyboard (especially with selection / focus).
+
+  As always, I've found that this is actually more difficult than I thought,
+  so it's still work in progress at the moment.
+
+Homepage:            TODO
+License:             MIT
+License-file:        LICENSE
+Author:              Hok Shun Poon <fushunpoon _ gmail _ com>
+Maintainer:          Hok Shun Poon <fushunpoon _ gmail _ com>
+Copyright:           (c) 2012 Hok Shun Poon
+Category:            Game
+Build-type:          Simple
+Cabal-version:       >=1.6
+
+Source-Repository head
+  type:     git
+  location: https://github.com/fushunpoon/haskell-tic-tac-toe
+
+-- Extra files to be distributed with the package, such as examples or
+-- a README.
+-- Extra-source-files:  
+
+
+Executable noughts-and-arrs-cli
+  -- .hs or .lhs file containing the Main module.
+  Main-is:             Main.hs
+  Hs-source-dirs:      src
+  -- Packages needed in order to build this package.
+  Build-depends:       base >= 2 && < 4, vector>=0.7.0.1,
+                       diffarray>=0.1,split>=0.1.4,parsec>=3.1.1,
+                       mtl>=2.0.1.0,list-extras>=0.4.0.1
+
+Executable noughts-and-arrs-gl
+  -- .hs or .lhs file containing the Main module.
+  Main-is:             GLMain.hs
+  Hs-source-dirs:      src
+  -- Packages needed in order to build this package.
+  Build-depends:       base >= 2 && < 4, vector>=0.7.0.1,
+                       diffarray>=0.1,split>=0.1.4,parsec>=3.1.1,
+                       mtl>=2.0.1.0,list-extras>=0.4.0.1,
+                       OpenGL>=2.2.3.0,GLUT>=2.1.2.1,Stream>=0.4.1,
+                       utility-ht>=0.0.7,GLFW-b>=0.0.2.10
+  
+  -- Modules not exported by this package.
+  -- Other-modules:       
+  
+  -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
+  -- Build-tools:         
+  
+Test-Suite test-ttt:
+  Type:                exitcode-stdio-1.0
+  Main-is:             test/Main.hs
+  Build-depends:       base >= 2 && < 4, Cabal >= 1.9.2

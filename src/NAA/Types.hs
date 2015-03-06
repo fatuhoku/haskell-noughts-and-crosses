@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleInstances, OverlappingInstances, TypeSynonymInstances #-}
-module NAA.Data (Board(..),
+module NAA.Types (Board(..),
                  Cell(..),  
                  Player(..),
                  BoardJudgement(..),
@@ -16,13 +16,63 @@ import Data.List.Split
 import Data.Array.Diff
 import qualified Data.Vector as V
 
--- A player is either R or O
+--- Application Lifetime ---
+-- | The Application runs with two optional components:
+--  - a game in progress (including paused)
+--  - a number of views (each associated with a game)
+--
+-- Through AppState transformation functions, each of these components maybe
+-- given control over how the application state should be transitioned.
+--
+-- It is moreover quite possible that views, and their associated view state
+-- is kept even before a game starts, and also, for an old game to end, and a
+-- new game to begin.
+--
+-- Each UIState must cope with the absense of a GameState, either by keeping and
+-- showing a previous UIState, or show something default (blank).
+--
+-- A View is an element of a UI. 
+--
+-- UI instances may be re-used over the course of multiple game instances. We
+-- achieve the dynamic association between game and UIs (and subsequently their
+-- Views) by recording it in an AppGameUIs application state, which stresses
+-- that both of these elements are present.
+data Application = App
+
+data AppState = AppNop
+              | AppUIsOnly [UIState]
+              | AppGameUIs GameState [UIState]
+              | AppTerminating
+
+--- Game Lifetime ---
+
+--- View Lifetime ---
+-- | When a view is first attached onto a game, it needs to produce from the
+-- existing game state 
+initialiseView :: GameState -> UIState
+
+updateUIFromGameDelta :: GameDelta -> UIDelta
+updateUIFromGameDelta gameDelta = undefined
+
+-- Notifies all UIs that a new game state will replace the old within the
+-- AppState. The UIs have the right to object to the starting of the new game. 
+newGame :: GameState -> AppState -> AppState
+newGame gameState appState = undefined
+
+-- | Game state runs in its own stateful monad. Rendering state is separate?
+
+
+-- GameDelta records a change in the Game's state. This description can be
+-- helpful to compute a necessary ViewDelta: a small update onto a view, without
+-- necessarily recomputing the entire view's state.
+
+-- A player is either X or O
 -- A cell may be empty, or it is occupied by a piece owned by a player
 -- A board is a two-dimensional vector of cells
 -- A 'judgement' on a board is a summative statement about a row, column or
 -- diagonal, which are combined via a Monoid instance to give the judgement of
 -- the entire board.
-data Player    = R | O                deriving (Show,Eq)
+data Player    = X | O                deriving (Show,Eq)
 data Cell      = Empty | Piece Player deriving (Eq)
 data DiagDir   = Major | Minor
 type Idx2D     = (Int,Int)
@@ -33,7 +83,7 @@ type Col  = [Cell]
 type Diag = [Cell]
 type RowColDiag  = [Cell]
 
--- To pass judgement over a board, we pass judgement over rows, columns and
+-- Judgements To pass judgement over a board, we pass judgement over rows, columns and
 -- diagonals (Maybe RCDJudgement) with Nothing indicating that nothing can be said about
 -- the RC or D. The good rows are merged to give the final board result.
 -- If incompatible RCDJudgements are found, then an Invalid BoardJudgement will
@@ -89,5 +139,5 @@ player (ColWin _ p)  = p
 player (DiagWin _ p) = p
 
 other :: Player -> Player
-other O = R
-other R = O
+other O = X
+other X = O

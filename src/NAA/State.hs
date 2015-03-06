@@ -2,7 +2,7 @@ module NAA.State (BoardState(..),
                   GameState(..),
                   blankBoardState) where
 
-import NAA.Data
+import NAA.Types
 
 data GameState = GameState {
   boardState :: BoardState,    -- the game board state
